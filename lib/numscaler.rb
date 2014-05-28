@@ -3,30 +3,34 @@
 # See {file:README.md} for practical examples.
 class NumScaler
   # NumScaler version string
-  VERSION = '0.0.4'
+  VERSION = '0.0.5'
   # Epsilon defines rounding precision
   EPSILON = 14
   # Available clamping modes
   MODES = [:strict, :cycle, :clamp]
 
+  # Additional `options`:
+  #
+  #   * `:mode` - specify clamping mode (*default: `:strict`*)
+  #   * `:precision` - specify Float rounding (*default: `EPSILON`*)
+  #
+  # Precision defines number of significant decimal digits for rounding.
+  #
   # Current clamping modes:
   #
   #   * `:strict` - raise ArgumentError for out-of-range number (*default*)
   #   * `:clamp`  - clamp number to source range
   #   * `:cycle`  - treat range as a circle of values
   #
-  # Precision defines number of significant decimal digits for rounding.
-  #
   # @param from [Range] source range
   # @param to [Range] target range
-  # @param mode [Symbol] clamping mode
-  # @param precision [Float] rounding precision
-  def initialize(from, to, mode = MODES.first, precision = EPSILON)
-    raise ArgumentError, 'Unknown mode' unless MODES.member? mode
-    raise ArgumentError, 'Precision out of ranger' unless precision > 0
+  # @param options [Hash] additional options
+  def initialize(from, to, options = {})
+    @mode = options[:mode] || MODES.first
+    @prec = options[:precision] || EPSILON
 
-    @mode = mode
-    @prec = precision
+    raise ArgumentError, 'Unknown mode' unless MODES.member? @mode
+    raise ArgumentError, 'Precision out of range' unless @prec > 0
 
     @src = { :orig  => from.min,
              :range => from.max.to_f - from.min.to_f,

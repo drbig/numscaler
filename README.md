@@ -29,73 +29,135 @@ and therefore that is the default rounding.
 
 There is a pretty brute-force test suite. Should work with any Ruby version.
 
+## Applications
+
+  * Scaling when graphing
+    ...from `0.0..1.0` to `0..(height-1)`
+  * Bounded unit conversion
+    ...from Celsius to Fahrenheit, Centimeters to Inches
+  * Circular unit conversion
+    ...from degrees to radians
+  * Value to index mapping
+    ...from `0.0..1.0` to 'very bad' - 'very good'
+
 ## Examples
 
-Install and run pry/irb:
+Install:
 
     $ gem install numscaler
-    $ pry
 
-Simple Integer - Integer conversion:
+From the `examples/` directory, first some graphing:
 
-    [1] pry(main)> require 'numscaler'
-    [2] pry(main)> iti = NumScaler.new(0..15, 0..256)
-    [3] pry(main)> iti.from(0)
-    => 0
-    [4] pry(main)> iti.from(7)
-    => 119
-    [5] pry(main)> iti.from(8)
-    => 137
-    [6] pry(main)> iti.to(128)
-    => 8
-    [7] pry(main)> iti.to(255)
-    => 15
-    [8] pry(main)> iti.from(-1)
-    ArgumentError: Number out of range
-
-Integer - Float conversion:
-
-    [9] pry(main)> itf = NumScaler.new(0..7, 0.0..16.0)
-    [10] pry(main)> itf.from(2)
-    => 4.57142857142857
-    [11] pry(main)> itf.from(7)
-    => 16.0
-    [12] pry(main)> itf.to(4)
-    => 2
-    [13] pry(main)> itf.to(4.234)
-    => 2
-
-Float - Float conversion:
-
-    [14] pry(main)> ftf = NumScaler.new(-2.5..2.5, -5.0..5.0)
-    [15] pry(main)> ftf.from(-2.0)
-    => -4.0
-    [16] pry(main)> ftf.to(-4.0)
-    => -2.0
-    [17] pry(main)> # deg - rad conversion
-    [18] pry(main)> ftf = NumScaler.new(0.0..180.0, 0.0..Math::PI)
-    [19] pry(main)> ftf.from(45.0)
-    => 0.78539816339745
-    [20] pry(main)> ftf.to(1.57079633)
-    => 90.0000001836389
-
-Clamping examples:
-
-    [21] pry(main)> ftf = NumScaler.new(0.0..4.0, -2.5..2.5, :clamp)
-    [22] pry(main)> ftf.from(-1.0)
-    => -2.5
-    [23] pry(main)> ftf.from(5.0)
-    => 2.5
-    [24] pry(main)> ftf.to(15.0)
-    => 4.0
+    require 'numscaler'
     
-    [25] pry(main)> ftf = NumScaler.new(0.0..4.0, -2.5..2.5, :cycle)
-    [26] pry(main)> ftf.from(-1.0)
-    => 1.25
-    [27] pry(main)> ftf.from(5.0)
-    => -1.25
-    [28] pry(main)> ftf.to(15.0)
-    => 2.0
+    s1 = NumScaler.new(0..64, 0.0..Math::PI*2.0)
+    s2 = NumScaler.new(-1.0..1.0, 0..9)
+    
+    graph = (0..64).to_a.collect do |e|
+      i = s2.from(Math.sin(s1.from(e)))
+      a = [' '] * 10
+      a[i] = '#'
+      a
+    end
+    
+    puts graph.transpose.collect {|e| e.join }
+
+Running it will produce a lovely:
+
+                                                #########            
+                                            ####         ####        
+                                         ###                 ###     
+                                       ##                       ##   
+                                     ##                           ## 
+    ###                           ###                               #
+       ##                       ##                                   
+         ###                 ###                                     
+            ####         ####                                        
+                #########                                            
+
+You can also use it for unit conversion if you wish, like so:
+
+    require 'numscaler'
+    
+    distance = NumScaler.new(0.0..100.0, 0.0..39.3701)
+    temperature = NumScaler.new(-30.0..120.0, -22.0..248.0)
+    angle = NumScaler.new(0.0..90.0, 0.0..Math::PI/2.0)
+    
+    puts 'Distance:'
+    [
+      ['9 mm ammo', 0.9],
+      ['max pin distance in an europlug', 1.86],
+      ['average baguette length', 65.0],
+    ].each do |label, cm|
+      print "#{label} (#{cm} cm) is ".rjust(50)
+      puts distance.from(cm).to_s + ' inch'
+    end
+    
+    puts "\nTemperature:"
+    [
+      ['siberian cold', -25.0],
+      ['minimal workplace temp', 18.0],
+      ['usually comfortable', 25.0],
+      ['Polish summer', 35.0],
+    ].each do |label, cent|
+      print "#{label} (#{cent} Celsius) is ".rjust(50)
+      puts temperature.from(cent).to_s + ' Fahrenheit'
+    end
+    
+    puts "\nAngle:"
+    [
+      ['human FOV blind spot width', 5.5],
+      ['decent slope', 23.0],
+      ['in the corner', 90.0],
+    ].each do |label, deg|
+      print "#{label} (#{deg} degrees) is ".rjust(50)
+      puts angle.from(deg).to_s + ' radians'
+    end
+
+Which will produce:
+
+    Distance:
+                                9 mm ammo (0.9 cm) is 0.3543309 inch
+          max pin distance in a europlug (1.86 cm) is 0.73228386 inch
+                 average baguette length (65.0 cm) is 25.590565 inch
+    
+    Temperature:
+                     siberian cold (-25.0 Celsius) is -13.0 Fahrenheit
+             minimal workplace temp (18.0 Celsius) is 64.4 Fahrenheit
+                usually comfortable (25.0 Celsius) is 77.0 Fahrenheit
+                      Polish summer (35.0 Celsius) is 95.0 Fahrenheit
+    
+    Angle:
+          human FOV blind spot width (5.5 degrees) is 0.09599310885969 radians
+                       decent slope (23.0 degrees) is 0.4014257279587 radians
+                      in the corner (90.0 degrees) is 1.5707963267949 radians
+
+You can also do some esoteric stuff, like:
+
+    require 'numscaler'
+    
+    palette = ' ,-\'"\\O/"\'-. '.split('')
+    s = NumScaler.new(-1.0..1.0, 0..(palette.length - 1), :mode => :cycle)
+    c = NumScaler.new(1..32, 0.0..Math::PI*2.0, :mode => :cycle)
+    
+    1.upto(256) do |o|
+      puts "\e[H\e[2J"
+      1.upto(32) do |y|
+        1.upto(64) do |x|
+          print palette[s.from(
+            Math.tan(c.from(o)) *\
+            (Math.sin(c.from(x)) +\
+            Math.cos(c.from(y)))
+          )]
+        end
+        print "\n"
+      end
+      print "\n"
+      sleep(0.5)
+    end
+
+For this you'd have to run it in a terminal (and it will probably not work
+as intended on windows).
 
 ## Copyright
 
