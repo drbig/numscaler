@@ -1,4 +1,4 @@
-# NumScaler
+# NumScaler [![Gem](http://img.shields.io/gem/v/numscaler.svg)](https://rubygems.org/gems/numscaler) [![Yard Docs](http://img.shields.io/badge/yard-docs-blue.svg)](http://www.rubydoc.info/github/drbig/numscaler/master)
 
 * [Homepage](https://github.com/drbig/numscaler)
 * [Documentation](http://rubydoc.info/gems/numscaler/frames)
